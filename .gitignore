@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.py[cod]
+db.sqlite3
+venv/
+.venv/
+
+recaptcha
+html:6LdyFhIuAAAAACmu4FRO6xkYyp8eFenmU5oMAhZW
+site:6LdyFhIuAAAAAALFA5pduZ46-ADgBPRtN6vRTAdI
+

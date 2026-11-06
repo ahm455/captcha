@@ -1,0 +1,1665 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CAPTCHA Solving & Verification Tool</title>
+
+    <style>
+        :root {
+            --primary: #3157d5;
+            --primary-dark: #2443ad;
+            --success: #15803d;
+            --danger: #dc2626;
+            --background: #f1f5f9;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 16px;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: auto;
+        }
+
+        header {
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .section {
+            background: var(--white);
+            padding: 24px;
+            margin-bottom: 22px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,.03);
+        }
+
+        .section h2 {
+            font-size: 19px;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 7px;
+            padding: 11px 17px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        button:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #475569;
+        }
+
+        button.secondary:hover {
+            background: #334155;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 14px;
+            max-width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            resize: vertical;
+        }
+
+        .challenge-image {
+            display: block;
+            max-width: 100%;
+            max-height: 230px;
+            margin: 18px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .widget-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 20px;
+            margin: 18px 0;
+        }
+
+        .widget-box[hidden] {
+            display: none !important;
+        }
+
+        .widget-box h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 17px;
+        }
+
+        .card strong {
+            display: block;
+            font-size: 25px;
+            margin-bottom: 8px;
+        }
+
+        .card span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .output {
+            background: #0f172a;
+            color: #dbeafe;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 55px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .status {
+            display: none;
+            padding: 12px 15px;
+            margin: 14px 0;
+            border-radius: 7px;
+            font-size: 14px;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 850px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #f8fafc;
+        }
+
+        .success-text {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .failure-text {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        @media(max-width: 650px) {
+            body {
+                padding: 16px 10px;
+            }
+
+            .section {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+{% csrf_token %}
+
+<div class="container">
+
+    <!-- HEADER -->
+    <header>
+        <h1>CAPTCHA Solving & Verification Tool</h1>
+
+        <p>
+            An authorized CAPTCHA testing application featuring synthetic
+            CAPTCHA generation, OCR recognition, provider detection,
+            official token verification, batch testing and performance reporting.
+        </p>
+    </header>
+
+
+    <!-- SECTION 1: CAPTCHA SOLVER -->
+    <section class="section">
+
+        <h2>1. Synthetic CAPTCHA Recognition & Solving</h2>
+
+        <p class="description">
+            Generate a synthetic CAPTCHA or upload your own
+            CAPTCHA image to test the OCR recognition engine.
+        </p>
+
+        <div class="row">
+
+            <button type="button" id="generateBtn">
+                Generate CAPTCHA
+            </button>
+
+            <button type="button" id="solveGeneratedBtn">
+                Solve Generated CAPTCHA
+            </button>
+
+            <button type="button" id="batchBtn" class="secondary">
+                Run Batch Test (20)
+            </button>
+
+        </div>
+
+        <img
+            id="challengeImage"
+            class="challenge-image"
+            alt="Generated synthetic CAPTCHA"
+            hidden
+        >
+
+        <div class="row">
+
+            <label for="captchaFile">Upload CAPTCHA:</label>
+
+            <input
+                type="file"
+                id="captchaFile"
+                accept="image/png,image/jpeg,image/webp"
+            >
+
+            <button type="button" id="solveUploadBtn">
+                Solve Uploaded Image
+            </button>
+
+        </div>
+
+        <div id="solverStatus" class="status" aria-live="polite"></div>
+
+        <h3>Recognition Result</h3>
+
+        <pre class="output" id="solverOutput">No CAPTCHA processed yet.</pre>
+
+    </section>
+
+
+    <!-- SECTION 2: OFFICIAL PROVIDER VERIFICATION -->
+    <section class="section">
+
+        <h2>2. Official CAPTCHA Provider Verification</h2>
+
+        <p class="description">
+            Select a CAPTCHA provider, complete its official test challenge,
+            and send the token to Django for server-side verification.
+        </p>
+
+        <div class="row">
+
+            <label for="providerSelect">Select Provider:</label>
+
+            <select id="providerSelect">
+                <option value="recaptcha">Google reCAPTCHA</option>
+                <option value="hcaptcha">hCaptcha</option>
+                <option value="turnstile">Cloudflare Turnstile</option>
+            </select>
+
+        </div>
+
+
+        <!-- GOOGLE RECAPTCHA -->
+        <div id="recaptchaContainer" class="widget-box">
+
+            <h3>Google reCAPTCHA</h3>
+
+            <div id="recaptchaWidget"></div>
+
+        </div>
+
+
+        <!-- HCAPTCHA -->
+        <div id="hcaptchaContainer" class="widget-box" hidden>
+
+            <h3>hCaptcha</h3>
+
+            <div id="hcaptchaWidget"></div>
+
+        </div>
+
+
+        <!-- CLOUDFLARE TURNSTILE -->
+        <div id="turnstileContainer" class="widget-box" hidden>
+
+            <h3>Cloudflare Turnstile</h3>
+
+            <div id="turnstileWidget"></div>
+
+        </div>
+
+
+        <div class="row">
+
+            <label for="manualToken">Manual test token (optional):</label>
+
+            <input
+                type="password"
+                id="manualToken"
+                placeholder="Enter test token"
+                autocomplete="off"
+                size="35"
+            >
+
+        </div>
+
+        <p class="muted">
+            Normally leave this field empty and use the official provider widget.
+            Manual tokens should only be used with authorized test environments.
+        </p>
+
+        <div class="row">
+
+            <button type="button" id="verifyBtn">
+                Verify Token
+            </button>
+
+            <button type="button" id="resetWidgetBtn" class="secondary">
+                Reset CAPTCHA
+            </button>
+
+        </div>
+
+        <div id="verificationStatus" class="status" aria-live="polite"></div>
+
+        <h3>Verification Response</h3>
+
+        <pre class="output" id="verificationOutput">No verification performed yet.</pre>
+
+    </section>
+
+
+    <!-- SECTION 3: PROVIDER DETECTION -->
+    <section class="section">
+
+        <h2>3. CAPTCHA Provider Detection</h2>
+
+        <p class="description">
+            Identify supported CAPTCHA providers from controlled HTML snippets.
+            Unsupported providers should be classified separately.
+        </p>
+
+        <textarea
+            id="htmlInput"
+            rows="5"
+            placeholder="Example: <div class='cf-turnstile'></div>"
+        ></textarea>
+
+        <div class="row" style="margin-top: 12px;">
+
+            <button type="button" id="detectBtn">
+                Detect Provider
+            </button>
+
+            <button type="button" id="clearDetectionBtn" class="secondary">
+                Clear
+            </button>
+
+        </div>
+
+        <div id="detectionStatus" class="status" aria-live="polite"></div>
+
+        <h3>Detection Result</h3>
+
+        <pre class="output" id="detectionOutput">No detection performed yet.</pre>
+
+    </section>
+
+
+    <!-- SECTION 4: STATISTICS -->
+    <section class="section">
+
+        <h2>4. Performance Statistics & Reporting</h2>
+
+        <p class="description">
+            Monitor recognition performance, verification outcomes,
+            processing time and estimated operational costs.
+        </p>
+
+        <div class="cards">
+
+            <div class="card">
+                <strong id="totalAttempts">0</strong>
+                <span>Total Attempts</span>
+            </div>
+
+            <div class="card">
+                <strong id="successfulAttempts">0</strong>
+                <span>Successful Attempts</span>
+            </div>
+
+            <div class="card">
+                <strong id="failedAttempts">0</strong>
+                <span>Failed Attempts</span>
+            </div>
+
+            <div class="card">
+                <strong id="successRate">0%</strong>
+                <span>Success Rate</span>
+            </div>
+
+            <div class="card">
+                <strong id="averageTime">0 ms</strong>
+                <span>Average Processing Time</span>
+            </div>
+
+        </div>
+
+        <div class="row" style="margin-top: 18px;">
+
+            <button type="button" id="refreshStatsBtn">
+                Refresh Statistics
+            </button>
+
+        </div>
+
+        <h3>Recent Attempts</h3>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Challenge Type / Provider</th>
+                        <th>Method</th>
+                        <th>Result</th>
+                        <th>Processing Time</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+
+                <tbody id="attemptsTable">
+
+                    <tr>
+                        <td colspan="6">No attempts recorded.</td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <p class="muted">
+            Cost reporting is not available in the current stats response.
+            Add cost tracking to the backend if a paid solving service is integrated.
+        </p>
+
+    </section>
+
+
+    <footer class="footer">
+        CAPTCHA Solving & Verification Tool
+        <br>
+        Django | Python | Pillow | Tesseract OCR
+        <br>
+        Technical Candidate Assessment
+    </footer>
+
+</div>
+
+
+<script>
+
+    // ==========================================
+    // 1. DJANGO API ENDPOINTS
+    // EXACTLY MATCH YOUR urls.py
+    // ==========================================
+
+    const API = {
+        generate: "/api/generate",
+        solve: "/api/solve",
+        batch: "/api/batch",
+        detect: "/api/detect",
+        verify: "/api/verify",
+        stats: "/api/stats"
+    };
+
+
+    const csrfToken = document.querySelector(
+        '[name=csrfmiddlewaretoken]'
+    ).value;
+
+    const $ = id => document.getElementById(id);
+
+    let currentCaptchaId = null;
+
+
+    // ==========================================
+    // 2. API REQUEST FUNCTION
+    // ==========================================
+
+    async function apiRequest(url, data = null, method = "POST") {
+
+        const options = {
+            method: method,
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": csrfToken
+            }
+        };
+
+        if (data instanceof FormData) {
+
+            options.body = data;
+
+        } else if (data !== null) {
+
+            options.headers["Content-Type"] = "application/json";
+
+            options.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(url, options);
+
+        const result = await response.json().catch(() => ({
+            status: "error",
+            detail: "Invalid server response"
+        }));
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.detail ||
+                result.error ||
+                `HTTP error ${response.status}`
+            );
+        }
+
+        return result;
+    }
+
+
+    // ==========================================
+    // 3. STATUS AND OUTPUT HELPERS
+    // ==========================================
+
+    function setStatus(id, message, type = "info") {
+
+        const element = $(id);
+
+        element.className = "status show " + type;
+
+        element.textContent = message;
+    }
+
+
+    function clearStatus(id) {
+
+        $(id).className = "status";
+
+        $(id).textContent = "";
+    }
+
+
+    function displayResult(id, result) {
+
+        $(id).textContent = JSON.stringify(
+            result,
+            null,
+            2
+        );
+    }
+
+
+    // ==========================================
+    // 4. GENERATE CAPTCHA
+    // ==========================================
+
+    async function generateCaptcha() {
+
+        const button = $("generateBtn");
+
+        button.disabled = true;
+
+        try {
+
+            setStatus(
+                "solverStatus",
+                "Generating synthetic CAPTCHA..."
+            );
+
+            const result = await apiRequest(
+                API.generate
+            );
+
+            if (!result.id || !result.image) {
+
+                throw new Error("Invalid CAPTCHA response.");
+            }
+
+            currentCaptchaId = result.id;
+
+            $("challengeImage").src =
+                "data:image/png;base64," + result.image;
+
+            $("challengeImage").hidden = false;
+
+            displayResult("solverOutput", {
+                status: "generated",
+                challenge_id: result.id,
+                challenge_type: "synthetic_text",
+                message: "CAPTCHA generated successfully."
+            });
+
+            setStatus(
+                "solverStatus",
+                "CAPTCHA generated successfully.",
+                "success"
+            );
+
+        } catch (error) {
+
+            setStatus(
+                "solverStatus",
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            button.disabled = false;
+        }
+    }
+
+
+    // ==========================================
+    // 5. SOLVE GENERATED CAPTCHA
+    // ==========================================
+
+    async function solveGeneratedCaptcha() {
+
+        if (!currentCaptchaId) {
+
+            setStatus(
+                "solverStatus",
+                "Please generate a CAPTCHA first.",
+                "error"
+            );
+
+            return;
+        }
+
+        const button = $("solveGeneratedBtn");
+
+        button.disabled = true;
+
+        try {
+
+            const formData = new FormData();
+
+            formData.append("id", currentCaptchaId);
+
+            setStatus(
+                "solverStatus",
+                "Running OCR recognition..."
+            );
+
+            const result = await apiRequest(
+                API.solve,
+                formData
+            );
+
+            displayResult(
+                "solverOutput",
+                result
+            );
+
+            if (result.status === "solved") {
+
+                if (result.correct === true) {
+
+                    setStatus(
+                        "solverStatus",
+                        "CAPTCHA solved correctly.",
+                        "success"
+                    );
+
+                } else if (result.correct === false) {
+
+                    setStatus(
+                        "solverStatus",
+                        "OCR answer does not match the generated answer.",
+                        "error"
+                    );
+
+                } else {
+
+                    setStatus(
+                        "solverStatus",
+                        "OCR processed. Confidence threshold evaluated.",
+                        "info"
+                    );
+                }
+
+            } else {
+
+                setStatus(
+                    "solverStatus",
+                    result.detail || result.status || "Solving failed.",
+                    "error"
+                );
+            }
+
+        } catch (error) {
+
+            setStatus(
+                "solverStatus",
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            button.disabled = false;
+
+            await loadStats();
+        }
+    }
+
+
+    // ==========================================
+    // 6. SOLVE UPLOADED CAPTCHA
+    // ==========================================
+
+    async function solveUploadedCaptcha() {
+
+        const file = $("captchaFile").files[0];
+
+        if (!file) {
+
+            setStatus(
+                "solverStatus",
+                "Please select a CAPTCHA image.",
+                "error"
+            );
+
+            return;
+        }
+
+        const allowedTypes = [
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+
+            setStatus(
+                "solverStatus",
+                "Only PNG, JPG and WEBP images are supported.",
+                "error"
+            );
+
+            return;
+        }
+
+        const button = $("solveUploadBtn");
+
+        button.disabled = true;
+
+        try {
+
+            const formData = new FormData();
+
+            formData.append("file", file);
+
+            setStatus(
+                "solverStatus",
+                "Processing uploaded CAPTCHA..."
+            );
+
+            const result = await apiRequest(
+                API.solve,
+                formData
+            );
+
+            displayResult(
+                "solverOutput",
+                result
+            );
+
+            if (result.status === "solved") {
+
+                setStatus(
+                    "solverStatus",
+                    "Uploaded CAPTCHA processed successfully.",
+                    "success"
+                );
+
+            } else {
+
+                setStatus(
+                    "solverStatus",
+                    result.detail || result.status || "Recognition failed.",
+                    "error"
+                );
+            }
+
+        } catch (error) {
+
+            setStatus(
+                "solverStatus",
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            button.disabled = false;
+
+            await loadStats();
+        }
+    }
+
+
+    // ==========================================
+    // 7. BATCH TESTING
+    // ==========================================
+
+    async function runBatch() {
+
+        const button = $("batchBtn");
+
+        button.disabled = true;
+
+        try {
+
+            setStatus(
+                "solverStatus",
+                "Running batch test on 20 synthetic CAPTCHAs..."
+            );
+
+            const result = await apiRequest(
+                API.batch,
+                { n: 20 }
+            );
+
+            displayResult(
+                "solverOutput",
+                {
+                    status: "completed",
+                    batch_size: result.batch_size,
+                    correct: result.correct,
+                    accuracy: result.accuracy + "%"
+                }
+            );
+
+            setStatus(
+                "solverStatus",
+                `Batch completed: ${result.correct}/${result.batch_size} correctly recognized.`,
+                "success"
+            );
+
+        } catch (error) {
+
+            setStatus(
+                "solverStatus",
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            button.disabled = false;
+
+            await loadStats();
+        }
+    }
+
+
+    // ==========================================
+    // 8. CAPTCHA PROVIDER CONFIGURATION
+    // ==========================================
+
+    const captchaConfig = {
+
+        recaptcha: {
+            url: "https://www.google.com/recaptcha/api.js?render=explicit",
+            element: "recaptchaWidget",
+            sitekey: "{{ keys.recaptcha }}"
+        },
+
+        hcaptcha: {
+            url: "https://js.hcaptcha.com/1/api.js?render=explicit",
+            element: "hcaptchaWidget",
+            sitekey: "{{ keys.hcaptcha }}"
+        },
+
+        turnstile: {
+    url: "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+    element: "turnstileWidget",
+    sitekey: "{{ keys.turnstile }}"
+}
+
+    };
+
+
+    const loadedScripts = {};
+
+    const widgetIds = {};
+
+
+    // ==========================================
+    // 9. LOAD SELECTED PROVIDER SCRIPT
+    // ==========================================
+
+    function loadCaptchaScript(provider) {
+
+        if (loadedScripts[provider]) {
+
+            return loadedScripts[provider];
+        }
+
+        const config = captchaConfig[provider];
+
+        if (!config) {
+
+            return Promise.reject(
+                new Error("Unsupported CAPTCHA provider.")
+            );
+        }
+
+        loadedScripts[provider] = new Promise((resolve, reject) => {
+
+            const script = document.createElement("script");
+
+            script.src = config.url;
+
+            script.async = true;
+
+            script.defer = true;
+
+            script.onload = resolve;
+
+            script.onerror = () => {
+
+                delete loadedScripts[provider];
+
+                reject(
+                    new Error(
+                        "Failed to load " + provider + " script."
+                    )
+                );
+            };
+
+            document.head.appendChild(script);
+
+        });
+
+        return loadedScripts[provider];
+    }
+
+
+    // ==========================================
+    // 10. RENDER SELECTED CAPTCHA WIDGET
+    // ==========================================
+
+    async function renderCaptcha(provider) {
+
+        if (widgetIds[provider] !== undefined) {
+
+            return;
+        }
+
+        const config = captchaConfig[provider];
+
+        if (!config.sitekey || !config.sitekey.trim()) {
+
+            throw new Error(
+                "Missing " + provider + " site key. Check Django settings."
+            );
+        }
+
+        await loadCaptchaScript(provider);
+
+        let widgetId;
+
+        if (provider === "recaptcha") {
+
+            await new Promise(resolve => {
+
+                grecaptcha.ready(resolve);
+
+            });
+
+            widgetId = grecaptcha.render(
+                config.element,
+                {
+                    sitekey: config.sitekey
+                }
+            );
+
+        } else if (provider === "hcaptcha") {
+
+            widgetId = hcaptcha.render(
+                config.element,
+                {
+                    sitekey: config.sitekey
+                }
+            );
+
+       } else if (provider === "turnstile") {
+
+    await new Promise(resolve => {
+
+        const checkTurnstile = () => {
+
+            if (
+                window.turnstile &&
+                typeof window.turnstile.render === "function"
+            ) {
+                resolve();
+            } else {
+                setTimeout(checkTurnstile, 100);
+            }
+
+        };
+
+        checkTurnstile();
+
+    });
+
+    widgetId = window.turnstile.render(
+        "#" + config.element,
+        {
+            sitekey: config.sitekey,
+            callback: function(token) {
+                console.log("Turnstile challenge completed.");
+            },
+            "error-callback": function(errorCode) {
+                console.error("Turnstile error:", errorCode);
+            },
+            "expired-callback": function() {
+                console.log("Turnstile token expired.");
+            }
+        }
+    );
+}
+
+        widgetIds[provider] = widgetId;
+    }
+
+
+    // ==========================================
+    // 11. PROVIDER SELECTION
+    // ==========================================
+
+    async function changeProvider() {
+
+        const provider = $("providerSelect").value;
+
+        console.log(
+            "Selected CAPTCHA provider:",
+            provider
+        );
+
+        console.log(
+            "Google site key exists:",
+            Boolean(captchaConfig.recaptcha.sitekey.trim())
+        );
+
+        $("recaptchaContainer").hidden =
+            provider !== "recaptcha";
+
+        $("hcaptchaContainer").hidden =
+            provider !== "hcaptcha";
+
+        $("turnstileContainer").hidden =
+            provider !== "turnstile";
+
+        clearStatus("verificationStatus");
+
+        try {
+
+            setStatus(
+                "verificationStatus",
+                "Loading " + provider + "..."
+            );
+
+            await renderCaptcha(provider);
+
+            setStatus(
+                "verificationStatus",
+                provider + " widget loaded successfully.",
+                "success"
+            );
+
+        } catch (error) {
+
+            setStatus(
+                "verificationStatus",
+                error.message,
+                "error"
+            );
+
+            console.error(
+                "CAPTCHA loading error:",
+                error
+            );
+        }
+    }
+
+
+    // ==========================================
+    // 12. GET PROVIDER TOKEN
+    // ==========================================
+
+    function getProviderToken(provider) {
+
+        const widgetId = widgetIds[provider];
+
+        if (widgetId === undefined) {
+
+            return "";
+        }
+
+        try {
+
+            if (
+                provider === "recaptcha" &&
+                window.grecaptcha
+            ) {
+
+                return grecaptcha.getResponse(widgetId);
+            }
+
+            if (
+                provider === "hcaptcha" &&
+                window.hcaptcha
+            ) {
+
+                return hcaptcha.getResponse(widgetId);
+            }
+
+            if (
+                provider === "turnstile" &&
+                window.turnstile
+            ) {
+
+                return turnstile.getResponse(widgetId);
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Unable to retrieve CAPTCHA token:",
+                error
+            );
+        }
+
+        return "";
+    }
+
+
+    // ==========================================
+    // 13. VERIFY PROVIDER TOKEN
+    // ==========================================
+
+    async function verifyToken() {
+
+        const provider = $("providerSelect").value;
+
+        const manualToken = $("manualToken").value.trim();
+
+        const token = manualToken ||
+            getProviderToken(provider);
+
+        if (!token) {
+
+            setStatus(
+                "verificationStatus",
+                "Missing token. Complete the CAPTCHA challenge first.",
+                "error"
+            );
+
+            return;
+        }
+
+        const button = $("verifyBtn");
+
+        button.disabled = true;
+
+        try {
+
+            setStatus(
+                "verificationStatus",
+                "Sending token to Django for server-side verification..."
+            );
+
+            const result = await apiRequest(
+                API.verify,
+                {
+                    provider: provider,
+                    token: token
+                }
+            );
+
+            displayResult(
+                "verificationOutput",
+                result
+            );
+
+            if (result.success === true) {
+
+                setStatus(
+                    "verificationStatus",
+                    "Official provider verification successful.",
+                    "success"
+                );
+
+            } else {
+
+                setStatus(
+                    "verificationStatus",
+                    "Verification failed: " +
+                    (result.reason || "Token rejected."),
+                    "error"
+                );
+            }
+
+        } catch (error) {
+
+            setStatus(
+                "verificationStatus",
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            $("manualToken").value = "";
+
+            resetProviderWidget(provider);
+
+            button.disabled = false;
+
+            await loadStats();
+        }
+    }
+
+
+    // ==========================================
+    // 14. RESET PROVIDER WIDGET
+    // ==========================================
+
+    function resetProviderWidget(provider) {
+
+        const widgetId = widgetIds[provider];
+
+        if (widgetId === undefined) {
+
+            return;
+        }
+
+        try {
+
+            if (
+                provider === "recaptcha" &&
+                window.grecaptcha
+            ) {
+
+                grecaptcha.reset(widgetId);
+            }
+
+            if (
+                provider === "hcaptcha" &&
+                window.hcaptcha
+            ) {
+
+                hcaptcha.reset(widgetId);
+            }
+
+            if (
+                provider === "turnstile" &&
+                window.turnstile
+            ) {
+
+                turnstile.reset(widgetId);
+            }
+
+        } catch (error) {
+
+            console.error(
+                "CAPTCHA reset failed:",
+                error
+            );
+        }
+    }
+
+
+    // ==========================================
+    // 15. DETECT PROVIDER
+    // ==========================================
+
+    async function detectProvider() {
+
+        const html = $("htmlInput").value.trim();
+
+        if (!html) {
+
+            setStatus(
+                "detectionStatus",
+                "Please enter an HTML snippet.",
+                "error"
+            );
+
+            return;
+        }
+
+        const button = $("detectBtn");
+
+        button.disabled = true;
+
+        try {
+
+            setStatus(
+                "detectionStatus",
+                "Detecting CAPTCHA provider..."
+            );
+
+            const result = await apiRequest(
+                API.detect,
+                { html: html }
+            );
+
+            const supported =
+                result.provider !== "unsupported";
+
+            displayResult(
+                "detectionOutput",
+                {
+                    provider: result.provider,
+                    supported: supported
+                }
+            );
+
+            setStatus(
+                "detectionStatus",
+                supported
+                    ? "Detected provider: " + result.provider
+                    : "Unsupported or unrecognized CAPTCHA provider.",
+                supported ? "success" : "info"
+            );
+
+        } catch (error) {
+
+            setStatus(
+                "detectionStatus",
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            button.disabled = false;
+        }
+    }
+
+
+    // ==========================================
+    // 16. LOAD STATISTICS
+    // ==========================================
+
+    async function loadStats() {
+
+        try {
+
+            const response = await fetch(
+                API.stats,
+                {
+                    method: "GET",
+                    credentials: "same-origin"
+                }
+            );
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Unable to retrieve statistics."
+                );
+            }
+
+            const result = await response.json();
+
+            $("totalAttempts").textContent =
+                result.total ?? 0;
+
+            $("successfulAttempts").textContent =
+                result.successful ?? 0;
+
+            $("failedAttempts").textContent =
+                result.failed ?? 0;
+
+            $("successRate").textContent =
+                (result.success_rate ?? 0) + "%";
+
+            $("averageTime").textContent =
+                (result.avg_time_ms ?? 0) + " ms";
+
+            renderAttempts(result.recent || []);
+
+        } catch (error) {
+
+            console.error(
+                "Statistics error:",
+                error.message
+            );
+        }
+    }
+
+
+    // ==========================================
+    // 17. RENDER ATTEMPT TABLE
+    // ==========================================
+
+    function renderAttempts(attempts) {
+
+        const tbody = $("attemptsTable");
+
+        tbody.replaceChildren();
+
+        if (!attempts.length) {
+
+            const row = document.createElement("tr");
+
+            const cell = document.createElement("td");
+
+            cell.colSpan = 6;
+
+            cell.textContent = "No attempts recorded.";
+
+            row.appendChild(cell);
+
+            tbody.appendChild(row);
+
+            return;
+        }
+
+        attempts.forEach(attempt => {
+
+            const row = document.createElement("tr");
+
+            const values = [
+                attempt.at ?? "-",
+                attempt.type ?? "-",
+                attempt.method ?? "-",
+                attempt.success ? "Success" : "Failed",
+                (attempt.time_ms ?? 0) + " ms",
+                attempt.reason || "-"
+            ];
+
+            values.forEach((value, index) => {
+
+                const cell = document.createElement("td");
+
+                cell.textContent = String(value);
+
+                if (index === 3) {
+
+                    cell.className = attempt.success
+                        ? "success-text"
+                        : "failure-text";
+                }
+
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+    }
+
+
+    // ==========================================
+    // 18. EVENT LISTENERS
+    // ==========================================
+
+    $("generateBtn").addEventListener(
+        "click",
+        generateCaptcha
+    );
+
+    $("solveGeneratedBtn").addEventListener(
+        "click",
+        solveGeneratedCaptcha
+    );
+
+    $("solveUploadBtn").addEventListener(
+        "click",
+        solveUploadedCaptcha
+    );
+
+    $("batchBtn").addEventListener(
+        "click",
+        runBatch
+    );
+
+    $("providerSelect").addEventListener(
+        "change",
+        changeProvider
+    );
+
+    $("verifyBtn").addEventListener(
+        "click",
+        verifyToken
+    );
+
+    $("resetWidgetBtn").addEventListener(
+        "click",
+        () => resetProviderWidget(
+            $("providerSelect").value
+        )
+    );
+
+    $("detectBtn").addEventListener(
+        "click",
+        detectProvider
+    );
+
+    $("clearDetectionBtn").addEventListener(
+        "click",
+        () => {
+
+            $("htmlInput").value = "";
+
+            $("detectionOutput").textContent =
+                "No detection performed yet.";
+
+            clearStatus("detectionStatus");
+        }
+    );
+
+    $("refreshStatsBtn").addEventListener(
+        "click",
+        loadStats
+    );
+
+
+    // ==========================================
+    // 19. APPLICATION INITIALIZATION
+    // ==========================================
+
+    changeProvider();
+
+    loadStats();
+
+</script>
+
+</body>
+</html>
