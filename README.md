@@ -159,4 +159,3 @@ This project is for educational purposes.
 
 ---
 
-> Built by **Brainz Technology** 🧠
